@@ -12,8 +12,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ./src .
 
-RUN ls -l
-
 WORKDIR "/src/SmartMolen.BlaubergFan.MqttHA"
 RUN dotnet build "./SmartMolen.BlaubergFan.MqttHA.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
