@@ -22,9 +22,12 @@ namespace SmartMolen.BlaubergFan.MqttHA.Services
         {
             var parameters = await UpdateFanData();
 
-            var status = FanStatus.FromParameters(parameters.ToList());
+            if(parameters.Any())
+            {
+                var status = FanStatus.FromParameters(parameters.ToList());
 
-            FanStatus = status;
+                FanStatus = status;
+            }
 
             await Task.CompletedTask;
         }

@@ -31,10 +31,10 @@ namespace SmartMolen.BlaubergFan.Services
 
         public async Task ValidateConfig()
         {
+            var defaultConfig = new BlaubergFanConfig();
+
             var devices = await DiscoverDevices();
             if (!devices.Any()) return;
-
-            var defaultConfig = new BlaubergFanConfig();
 
             if (string.IsNullOrWhiteSpace(_config.Hostname) || _config.Hostname == defaultConfig.Hostname)
             {
@@ -194,7 +194,7 @@ namespace SmartMolen.BlaubergFan.Services
                     var response = ParseResponse(data.ToList());
 
                     var fanId = response.FirstOrDefault(x => x.Address == 0x7c)?.StringValue;
-                    if(fanId != null && !list.ContainsValue(fanId))
+                    if(fanId != null && !list.ContainsValue(fanId) && fanId != BlaubergFanConfig.DefaultDeviceId)
                     {
                         string senderIp = ((IPEndPoint)senderRemote).Address.ToString();
                         list.Add(senderIp, fanId);
@@ -258,20 +258,27 @@ namespace SmartMolen.BlaubergFan.Services
             }
 
             var response = await Send(dataBytes);
+            if(response.Any())
+            {
+                var responseParameters = ParseResponse(response);
+                return responseParameters;
+            }
 
-            // ParseResponseOld(response.ToArray());
-            var responseParameters = ParseResponse(response);
-
-            return responseParameters;
+            return [];
         }
 
         public List<Parameter> ParseResponse(List<byte> data)
         {
             var parameters = new List<Parameter>();
+
             // skip header, type bytes
             var i = 3;
+            if (data.Count <= i)
+            {
+                // if there are not header bytes, invalid data received.
+                return parameters;
+            }
 
-            // from the byte get the value
 
             // Id
             var idLength = (int)data[i++];
