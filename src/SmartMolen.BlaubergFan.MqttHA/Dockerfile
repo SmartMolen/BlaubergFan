@@ -10,7 +10,7 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SmartMolen.BlaubergFan.MqttHA/SmartMolen.BlaubergFan.MqttHA.csproj", "SmartMolen.BlaubergFan.MqttHA/"]
+COPY ["src/SmartMolen.BlaubergFan.MqttHA/SmartMolen.BlaubergFan.MqttHA.csproj", "SmartMolen.BlaubergFan.MqttHA/"]
 RUN dotnet restore "./SmartMolen.BlaubergFan.MqttHA/SmartMolen.BlaubergFan.MqttHA.csproj"
 COPY . .
 WORKDIR "/src/SmartMolen.BlaubergFan.MqttHA"
