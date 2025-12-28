@@ -47,16 +47,19 @@ namespace SmartMolen.BlaubergFan.Models
         }
 
         public Parameter() { }
+
         public Parameter(byte address)
         {
             Address = address;
             Key = $"Param {(int)address}";
         }
+
         public Parameter(byte address, string key)
         {
             Address = address;
             Key = key;
         }
+
         public Parameter(byte address, string key, Dictionary<int, string> mapping)
         {
             Address = address;

@@ -1,13 +1,14 @@
-﻿using SmartMolen.BlaubergFan.Models;
-using SmartMolen.BlaubergFan.MqttHA.Models;
-using SmartMolen.BlaubergFan.Services;
-using SmartMolen.MqttHA.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using SmartMolen.BlaubergFan.Models;
+using SmartMolen.BlaubergFan.MqttHA.Models;
+using SmartMolen.BlaubergFan.Services;
+using SmartMolen.MqttHA.Models;
 
 namespace SmartMolen.BlaubergFan.MqttHA.Services
 {
@@ -22,9 +23,12 @@ namespace SmartMolen.BlaubergFan.MqttHA.Services
         {
             var parameters = await UpdateFanData();
 
-            var status = FanStatus.FromParameters(parameters.ToList());
+            if (parameters.Any())
+            {
+                var status = FanStatus.FromParameters(parameters.ToList());
 
-            FanStatus = status;
+                FanStatus = status;
+            }
 
             await Task.CompletedTask;
         }
@@ -38,8 +42,8 @@ namespace SmartMolen.BlaubergFan.MqttHA.Services
         {
             var deviceName = HaDevice.SanitizeName(_config.FanId);
 
-            var device = new HaDevice(GetType().Name) 
-            { 
+            var device = new HaDevice(GetType().Name)
+            {
                 Name = deviceName,
                 Identifiers = [deviceName],
                 SerialNumber = _config.FanId,
@@ -133,36 +137,6 @@ namespace SmartMolen.BlaubergFan.MqttHA.Services
             }
 
             {
-                var entity = new HaEntity(false, device.DeviceTopic)
-                {
-                    InternalName = "Humidity",
-                    Device = device,
-                    UniqueId = $"{device.Name}_Humidity",
-                    Icon = "mdi:water-percent",
-                    ValueTemplate = "{{ value_json.Humidity }}",
-                    UnitOfMeasure = "%",
-                    DeviceClass = "HUMIDITY",
-                };
-
-                list.Add(entity.InternalName, entity);
-            }
-
-            {
-                var entity = new HaEntity(false, device.DeviceTopic)
-                {
-                    InternalName = "Temperature",
-                    Device = device,
-                    UniqueId = $"{device.Name}_Temperature",
-                    Icon = "mdi:thermometer",
-                    ValueTemplate = "{{ value_json.Temperature }}",
-                    UnitOfMeasure = "°C",
-                    DeviceClass = "TEMPERATURE",
-                };
-
-                list.Add(entity.InternalName, entity);
-            }
-
-            {
                 var entity = new HaBinarySensor(false, device.DeviceTopic)
                 {
                     InternalName = "RunningTimer",
@@ -240,15 +214,113 @@ namespace SmartMolen.BlaubergFan.MqttHA.Services
                 list.Add(entity.InternalName, entity);
             }
 
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "MaxSpeedSetpoint",
+                    Device = device,
+                    UniqueId = $"{device.Name}_MaxSpeedSetpoint",
+                    Icon = "mdi:fan",
+                    ValueTemplate = "{{ value_json.MaxSpeedSetpoint }}",
+                    UnitOfMeasure = "%",
+                    StateClass = "MEASUREMENT",
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "SilentSpeedSetpoint",
+                    Device = device,
+                    UniqueId = $"{device.Name}_SilentSpeedSetpoint",
+                    Icon = "mdi:fan",
+                    ValueTemplate = "{{ value_json.SilentSpeedSetpoint }}",
+                    UnitOfMeasure = "%",
+                    StateClass = "MEASUREMENT",
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "Humidity",
+                    Device = device,
+                    UniqueId = $"{device.Name}_Humidity",
+                    Icon = "mdi:water-percent",
+                    ValueTemplate = "{{ value_json.Humidity }}",
+                    UnitOfMeasure = "%",
+                    DeviceClass = "HUMIDITY",
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "Temperature",
+                    Device = device,
+                    UniqueId = $"{device.Name}_Temperature",
+                    Icon = "mdi:thermometer",
+                    ValueTemplate = "{{ value_json.Temperature }}",
+                    UnitOfMeasure = "°C",
+                    DeviceClass = "TEMPERATURE",
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+
+            // Diagnostic entities
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "DeviceId",
+                    Device = device,
+                    UniqueId = $"{device.Name}_DeviceId",
+                    ValueTemplate = "{{ value_json.DeviceId }}",
+                    EntityCategory = "diagnostic"
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "Firmware",
+                    Device = device,
+                    UniqueId = $"{device.Name}_Firmware",
+                    ValueTemplate = "{{ value_json.Firmware }}",
+                    EntityCategory = "diagnostic"
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+            {
+                var entity = new HaEntity(false, device.DeviceTopic)
+                {
+                    InternalName = "UnitType",
+                    Device = device,
+                    UniqueId = $"{device.Name}_UnitType",
+                    ValueTemplate = "{{ value_json.UnitType }}",
+                    EntityCategory = "diagnostic"
+                };
+
+                list.Add(entity.InternalName, entity);
+            }
+
             return list;
         }
 
         public async Task ReceiveCommand(HaEntity entity, string payload)
         {
-            if(entity.InternalName == "ModeBoost")
+            if (entity.InternalName == "ModeBoost")
             {
                 await SetBoostMode(payload == "ON");
-                
+
             }
 
             await Task.CompletedTask;
