@@ -1,5 +1,6 @@
-using SmartMolen.MqttHA.Services;
 using System.Text.Json;
+
+using SmartMolen.MqttHA.Services;
 
 namespace SmartMolen.BlaubergFan.MqttHA.Services;
 

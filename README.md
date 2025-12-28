@@ -1,6 +1,6 @@
 # BlaubergFan
 
-Library to communicate with [Blauberg Smart Wi-Fi Fan](https://blaubergventilatoren.de/en/product/smart-wifi#downloads).
+Library to communicate with [Blauberg Smart Wi-Fi Fan](https://blaubergventilatoren.de/en/product/smart-wifi).
 
-Based on the python library: https://github.com/aglehmann/pyEcovent and the [documentation](https://blaubergventilatoren.de/uploads/download/b168_1en_01preview.pdf). 
+Based on the python library: https://github.com/aglehmann/pyEcovent and the [documentation](https://blaubergventilatoren.net/download/smart-wi-fi-manual-8533.pdf). 
 

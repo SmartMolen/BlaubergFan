@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using SmartMolen.BlaubergFan.Models;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,6 +7,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+
+using Microsoft.Extensions.Logging;
+
+using SmartMolen.BlaubergFan.Models;
 
 namespace SmartMolen.BlaubergFan.Services
 {
@@ -25,6 +27,7 @@ namespace SmartMolen.BlaubergFan.Services
             _config = config;
 
             // If _config.FanId is empty, use search command to find the fanID based on the hostname.
+            // If running in docker, this only works when using network: host (and others?)
 
             _parameters = BuildSupportedParameterList();
         }
@@ -44,7 +47,7 @@ namespace SmartMolen.BlaubergFan.Services
             else if (string.IsNullOrWhiteSpace(_config.FanId) || _config.FanId == defaultConfig.FanId)
             {
                 // TODO: convert hostname to ipaddress
-                if(devices.TryGetValue(_config.Hostname, out var fanId))
+                if (devices.TryGetValue(_config.Hostname, out var fanId))
                 {
                     _config.FanId = fanId;
                 }
@@ -79,22 +82,22 @@ namespace SmartMolen.BlaubergFan.Services
                 new(0x000c, "Current status of fan operation by signal from an external switch"),
                 new(0x000d, "Current status of fan operation in interval ventilation mode"),
                 new(0x000e, "Current status of fan operation in SILENT mode"),
-                new(0x000f, "Permission of operation based on humidity sensor readings" ),
-                new(0x0011),
-                new(0x0013),
-                new(0x0014),
-                new(0x0016),
-                new(0x0017),
+                new(0x000f, "Permission of operation based on humidity sensor readings"),
+                new(0x0011, "Permission of operation based on temperature sensor readings"),
+                new(0x0013, "Permission of operation based on signal from an external switch"),
+                new(0x0014, "Humidity activation value"), // Value: 70 / humidity activation value
+                new(0x0016, "Temperature activation value"), // Value: 24 // Temperataure activation value
+                new(0x0017), // Value: 10
                 new(0x0018, "Max speed setpoint"),
                 new(0x001a, "Silent speed setpoint"),
-                new(0x001b),
-                new(0x001d),
-                new(0x001e),
-                new(0x001f),
-                new(0x0020),
-                new(0x0021),
-                new(0x0023),
-                new(0x0024),
+                new(0x001b, "Interval ventilation speed setpoint"), // Value: 50 / 2
+                new(0x001d, "Interval ventilation mode activation"), // Value: 0
+                new(0x001e, "Silent mode activation"), // Value: 0
+                new(0x001f, "Silent Mode start time in seconds"), // Value: 0
+                new(0x0020, "Silent Mode end time in seconds"), // Value: 21600
+                new(0x0021, "Current time of the fan internal clock in seconds"), // Value: -23523
+                new(0x0023, "Turn-off delay timer/BOOST setpoint"), // Value: 3
+                new(0x0024, "Turn-on delay timer setpoint"), // Value: 0
                 new(0x002e, "Humidity"),
                 new(0x0031, "Temperature"),
 
@@ -114,7 +117,6 @@ namespace SmartMolen.BlaubergFan.Services
                 new(0x00b9, "Unit type"),
 
             };
-
 
             return list;
         }
@@ -194,7 +196,7 @@ namespace SmartMolen.BlaubergFan.Services
                     var response = ParseResponse(data.ToList());
 
                     var fanId = response.FirstOrDefault(x => x.Address == 0x7c)?.StringValue;
-                    if(fanId != null && !list.ContainsValue(fanId) && fanId != BlaubergFanConfig.DefaultDeviceId)
+                    if (fanId != null && !list.ContainsValue(fanId) && fanId != BlaubergFanConfig.DefaultDeviceId)
                     {
                         string senderIp = ((IPEndPoint)senderRemote).Address.ToString();
                         list.Add(senderIp, fanId);
@@ -258,7 +260,7 @@ namespace SmartMolen.BlaubergFan.Services
             }
 
             var response = await Send(dataBytes);
-            if(response.Any())
+            if (response.Any())
             {
                 var responseParameters = ParseResponse(response);
                 return responseParameters;
@@ -279,7 +281,6 @@ namespace SmartMolen.BlaubergFan.Services
                 return parameters;
             }
 
-
             // Id
             var idLength = (int)data[i++];
             var id = Encoding.ASCII.GetString(data.Slice(i, idLength).ToArray());
@@ -297,8 +298,7 @@ namespace SmartMolen.BlaubergFan.Services
             var responseLength = data.Count - i - 2;
             var response = data.Slice(i, responseLength);
 
-            // 
-
+            // Data
             var dataIndex = 0;
             while (dataIndex < responseLength)
             {
@@ -337,7 +337,7 @@ namespace SmartMolen.BlaubergFan.Services
                 // parameter ID
                 var parameterId = currentByte;
 
-                if(response.Count() < dataIndex+ valueLength)
+                if (response.Count() < dataIndex + valueLength)
                 {
                     _logger.LogDebug($"ResponseContent: {parameterId.ToString("x2")}: NoValue.");
                     continue;
